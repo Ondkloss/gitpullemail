@@ -1,10 +1,12 @@
 import re
 import configparser
 import smtplib
+import logging
 from email.mime.text import MIMEText
 
 from git import Repo
 
+LOGGER = None
 ALREADY_UP_TO_DATE = 'Already up to date.'
 
 
@@ -13,22 +15,9 @@ class GitPullEmailParser(configparser.ConfigParser):
     def __init__(self, config_path):
         super().__init__()
         self.read(config_path)
-        self.__fetch_config()
 
-    def __fetch_config(self):
-        self.repo_name = self.getstring('repo_name')
-        self.repo_path = self.getstring('repo_path')
-        self.smtp_host = self.getstring('smtp_host')
-        self.email_from = self.getstring('email_from')
-        self.email_to = self.getlist('email_to')
-        self.email_subject = self.getstring('email_subject')
-        self.email_text = self.getstring('email_text')
-
-    def getstring(self, option):
-        return super().get('root', option)
-
-    def getlist(self, option):
-        return self.getstring(option).split(',')
+    def getlist(self, section, option):
+        return self.get(section, option).split(',')
 
 
 def get_configparser():
@@ -51,23 +40,51 @@ def send_email(host, frm, to, subject, text):
     s.quit()
 
 
-def replace_variables(configparser, value):
+def replace_variables(configparser, section, value):
     results = re.findall(r'\{\{\w+\}\}', value)
     product = value
 
     for result in results:
-        product = product.replace(result, configparser.getstring(result[2:-2]))
+        if result == '{{section}}':
+            product = product.replace(result, section)
+        else:
+            product = product.replace(result, configparser.get(section, result[2:-2], fallback=result))
 
     return product
 
 
+def logger():
+    logger = logging.getLogger('gitpullemail')
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    fh = logging.FileHandler('gpe.log')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    ch = logging.StreamHandler()
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    return logger
+
+
 def process():
     cp = get_configparser()
+    repos = cp.sections()
 
-    result = git_pull(cp.repo_path)
-    if result != ALREADY_UP_TO_DATE:
-        send_email(cp.smtp_host, cp.email_from, cp.email_to, replace_variables(cp, cp.email_subject), replace_variables(cp, cp.email_text))
+    for repo in repos:
+        LOGGER.info('Checking for changes in %s' % repo)
+        result = git_pull(cp.get(repo, 'repo_path'))
+        if result != ALREADY_UP_TO_DATE:
+            LOGGER.info('Changes detected, sending e-mail')
+            send_email(cp.get(repo, 'smtp_host'),
+                       cp.get(repo, 'email_from'),
+                       cp.getlist(repo, 'email_to'),
+                       replace_variables(cp, repo, cp.get(repo, 'email_subject')),
+                       replace_variables(cp, repo, cp.get(repo, 'email_text')))
 
 
 if __name__ == "__main__":
+    LOGGER = logger()
     process()
