@@ -16,4 +16,10 @@ Perform a git pull on a repo and send an email if something changed.
 
 To run hourly you could add this line to your crontab:
 
-    0 * * * * cd /path/to/this/repo && python gpe.py
+    0 * * * * /path/to/repo/gpe.sh
+
+## Scheduled task
+
+To run as a scheduled task execute this command:
+
+    C:\path\to\repo\gpe.bat

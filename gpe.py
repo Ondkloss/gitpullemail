@@ -1,10 +1,11 @@
-import re
 import configparser
-import smtplib
 import logging
+import os
+import re
+import smtplib
 from email.mime.text import MIMEText
 
-from git import Repo
+from git import Repo, exc
 
 LOGGER = None
 ALREADY_UP_TO_DATE = 'Already up to date.'
@@ -20,13 +21,22 @@ class GitPullEmailParser(configparser.ConfigParser):
         return self.get(section, option).split(',')
 
 
+def set_cwd():
+    abspath = os.path.abspath(__file__)
+    dirname = os.path.dirname(abspath)
+    os.chdir(dirname)
+
+
 def get_configparser():
     return GitPullEmailParser('settings.cfg')
 
 
 def git_pull(repo_dir):
-    repo = Repo(repo_dir)
-    return repo.git.pull()
+    try:
+        repo = Repo(repo_dir)
+        return repo.git.pull()
+    except exc.GitError as e:
+        LOGGER.error(e)
 
 
 def send_email(host, frm, to, subject, text):
@@ -74,17 +84,19 @@ def process():
     repos = cp.sections()
 
     for repo in repos:
-        LOGGER.info('Checking for changes in %s' % repo)
         result = git_pull(cp.get(repo, 'repo_path'))
         if result != ALREADY_UP_TO_DATE:
-            LOGGER.info('Changes detected, sending e-mail')
+            LOGGER.info('Changes detected in %s, sending e-mail' % repo)
             send_email(cp.get(repo, 'smtp_host'),
                        cp.get(repo, 'email_from'),
                        cp.getlist(repo, 'email_to'),
                        replace_variables(cp, repo, cp.get(repo, 'email_subject')),
                        replace_variables(cp, repo, cp.get(repo, 'email_text')))
+        else:
+            LOGGER.info('No changes detected in %s' % repo)
 
 
 if __name__ == "__main__":
+    set_cwd()
     LOGGER = logger()
     process()
