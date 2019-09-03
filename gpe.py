@@ -1,8 +1,8 @@
-import configparser
 import logging
 import os
 import re
 import smtplib
+from configparser import DEFAULTSECT, ConfigParser
 from email.mime.text import MIMEText
 
 from git import Repo, exc
@@ -11,7 +11,7 @@ LOGGER = None
 ALREADY_UP_TO_DATE = 'Already up to date.'
 
 
-class GitPullEmailParser(configparser.ConfigParser):
+class GitPullEmailParser(ConfigParser):
 
     def __init__(self, config_path):
         super().__init__()
@@ -63,9 +63,9 @@ def replace_variables(configparser, section, value):
     return product
 
 
-def logger():
+def logger(level):
     logger = logging.getLogger('gitpullemail')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.getLevelName(level))
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     fh = logging.FileHandler('gpe.log')
@@ -80,7 +80,9 @@ def logger():
 
 
 def process():
+    set_cwd()
     cp = get_configparser()
+    LOGGER = logger(cp.get(DEFAULTSECT, 'logging_level'))
     repos = cp.sections()
 
     for repo in repos:
@@ -97,6 +99,4 @@ def process():
 
 
 if __name__ == "__main__":
-    set_cwd()
-    LOGGER = logger()
     process()
