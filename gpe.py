@@ -28,7 +28,7 @@ def set_cwd():
 
 
 def get_configparser():
-    return GitPullEmailParser('settings.cfg')
+    return GitPullEmailParser('settings.ini')
 
 
 def git_pull(repo_dir):

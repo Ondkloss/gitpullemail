@@ -10,7 +10,7 @@ Perform a git pull on a repo and send an email if something changed.
    2. `source venv/bin/activate`
    3. `pip install -r requirements.txt`
 3. fill in settings.cfg
-4. run `python main.py`
+4. run `python gpe.py`
 
 ## Cron job
 
