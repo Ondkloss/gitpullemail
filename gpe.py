@@ -17,8 +17,16 @@ class GitPullEmailParser(ConfigParser):
         super().__init__()
         self.read(config_path)
 
-    def getlist(self, section, option):
-        return self.get(section, option).split(',')
+    def getfirst(self, sections, option):
+        for section in sections:
+            value = self.get(section, option)
+            if value is not None:
+                return value
+
+        return None
+
+    def getfirstlist(self, sections, option):
+        return self.getfirst(sections, option).split(',')
 
 
 def set_cwd():
@@ -80,20 +88,22 @@ def logger(level):
 
 
 def process():
+    global LOGGER
     set_cwd()
     cp = get_configparser()
     LOGGER = logger(cp.get(DEFAULTSECT, 'logging_level'))
     repos = cp.sections()
 
     for repo in repos:
-        result = git_pull(cp.get(repo, 'repo_path'))
+        sections = [repo, DEFAULTSECT]
+        result = git_pull(cp.getfirst(sections, 'repo_path'))
         if result != ALREADY_UP_TO_DATE:
             LOGGER.info('Changes detected in %s, sending e-mail' % repo)
-            send_email(cp.get(repo, 'smtp_host'),
-                       cp.get(repo, 'email_from'),
-                       cp.getlist(repo, 'email_to'),
-                       replace_variables(cp, repo, cp.get(repo, 'email_subject')),
-                       replace_variables(cp, repo, cp.get(repo, 'email_text')))
+            send_email(cp.getfirst(sections, 'smtp_host'),
+                       cp.getfirst(sections, 'email_from'),
+                       cp.getfirstlist(sections, 'email_to'),
+                       replace_variables(cp, repo, cp.getfirst(sections, 'email_subject')),
+                       replace_variables(cp, repo, cp.getfirst(sections, 'email_text')))
         else:
             LOGGER.info('No changes detected in %s' % repo)
 
