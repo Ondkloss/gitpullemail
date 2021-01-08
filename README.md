@@ -1,6 +1,8 @@
 # gitpullemail
 
-Perform a git pull on a repo and send an email if something changed.
+Performs a fetch, diff and merge to check if any of your chosen paths are affected by recent changes.
+
+If changes to your chosen paths are detected an email is sent about the change.
 
 ## Installation
 
@@ -9,8 +11,9 @@ Perform a git pull on a repo and send an email if something changed.
    1. `virtualenv venv`
    2. `source venv/bin/activate`
    3. `pip install -r requirements.txt`
-3. fill in settings.cfg
-4. run `python gpe.py`
+3. `cp settings.ini.example settings.ini`
+4. fill in settings.ini
+5. run `python gpe.py`
 
 ## Cron job
 
@@ -23,3 +26,7 @@ To run hourly you could add this line to your crontab:
 To run as a scheduled task execute this command:
 
     C:\path\to\repo\gpe.bat
+
+## License
+
+The contents of this repo are released under the MIT license.

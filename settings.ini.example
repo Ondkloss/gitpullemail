@@ -1,20 +1,25 @@
 [DEFAULT]
 logging_level=INFO
+email_subject=New commit to repo {{section}}
+email_text=New commit to repo {{section}}. The repo is located at:
+   {{repo_path}}
+
+   Your monitored paths:
+   {{repo_monitor_paths}}
+
+   The differing files:
+   {{diff}}
 
 [Alices repo]
 repo_path=/path/to/alices/repo
+repo_monitor_paths=folder1/*,folder2/*
 smtp_host=smtp.example.com
 email_from=alice@example.com
 email_to=alice@example.com,bob@example.com
-email_subject=New commit to repo {{section}}
-email_text=New commit to repo {{section}}
-   The repo is located at: {{repo_path}}
 
 [Bobs repo]
 repo_path=/path/to/bobs/repo
+repo_monitor_paths=*
 smtp_host=smtp.example.com
 email_from=bob@example.com
 email_to=alice@example.com,bob@example.com
-email_subject=New commit to repo {{section}}
-email_text=New commit to repo {{section}}
-   The repo is located at: {{repo_path}}
