@@ -100,18 +100,13 @@ def replace_variables(configparser, section, diff, value):
     return product
 
 
-def logger(level):
+def logger(level_global, level):
+    logging.basicConfig(level=level_global, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger('gitpullemail')
-    logger.setLevel(logging.getLevelName(level))
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger.setLevel(level)
 
     fh = logging.FileHandler('gpe.log')
-    fh.setFormatter(formatter)
     logger.addHandler(fh)
-
-    ch = logging.StreamHandler()
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
 
     return logger
 
@@ -120,7 +115,7 @@ def process():
     global LOGGER
     set_cwd()
     cp = get_configparser()
-    LOGGER = logger(cp.get(DEFAULTSECT, 'logging_level'))
+    LOGGER = logger(cp.get(DEFAULTSECT, 'logging_level_global'), cp.get(DEFAULTSECT, 'logging_level'))
     repos = cp.sections()
 
     for repo in repos:

@@ -1,4 +1,5 @@
 [DEFAULT]
+logging_level_global=WARNING
 logging_level=INFO
 email_subject=New commit to repo {{section}}
 email_text=New commit to repo {{section}}. The repo is located at:
